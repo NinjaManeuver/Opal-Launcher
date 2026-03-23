@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Opal Launcher – Minecraft Launcher</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --grass: #5d9e3f; --dirt: #866043; --stone: #8b8b8b;
+      --opal: #a8d8ea; --opal2: #7ec8e3; --opal3: #3fa7d6;
+      --dark: #1a1a2e; --darker: #0d0d1a;
+      --wood: #6b4c1e; --leaf: #3a7d44;
+      --gold: #ffd700; --diamond: #5de0e6;
+      --pixel: 'Press Start 2P', monospace;
+      --mono: 'VT323', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background-color: var(--darker); color: #e8e8e8;
+      font-family: var(--mono); font-size: 20px; overflow-x: hidden;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect width='16' height='16' fill='%235d9e3f' rx='2'/%3E%3C/svg%3E") 8 8, auto;
+      background-image: linear-gradient(rgba(93,158,63,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(93,158,63,0.03) 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; width: 100%; z-index: 1000;
+      background: rgba(13,13,26,0.93); border-bottom: 4px solid var(--grass);
+      backdrop-filter: blur(8px); display: flex; align-items: center;
+      justify-content: space-between; padding: 0 40px; height: 64px;
+    }
+    .nav-logo { font-family: var(--pixel); font-size: 13px; color: var(--opal2); text-shadow: 0 0 12px var(--opal3), 2px 2px 0 #000; }
+    .nav-logo span { color: var(--diamond); }
+    nav ul { list-style: none; display: flex; gap: 8px; }
+    nav ul li a {
+      font-family: var(--pixel); font-size: 9px; color: #ccc;
+      text-decoration: none; padding: 8px 14px; border: 2px solid transparent; transition: all 0.1s;
+    }
+    nav ul li a:hover { color: var(--grass); border-color: var(--grass); background: rgba(93,158,63,0.12); text-shadow: 0 0 8px var(--grass); }
+    nav ul li a.active { color: var(--opal2); border-color: var(--opal3); }
+
+    .notif-bar {
+      position: fixed; top: 64px; width: 100%; background: var(--grass);
+      padding: 8px; text-align: center; font-family: var(--pixel); font-size: 8px;
+      color: #fff; text-shadow: 1px 1px 0 #000; z-index: 999; letter-spacing: 1px;
+    }
+
+    /* HERO */
+    #home {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+      background: linear-gradient(180deg, #0d0d1a 0%, #1a1a2e 40%, #16213e 100%);
+      padding-top: 80px;
+    }
+    .stars { position: absolute; inset: 0; pointer-events: none; }
+    .star { position: absolute; width: 4px; height: 4px; background: white; image-rendering: pixelated; animation: twinkle 2s infinite alternate; }
+    @keyframes twinkle { from { opacity: 0.2; } to { opacity: 1; } }
+
+    .ground { position: absolute; bottom: 0; left: 0; width: 100%; }
+    .ground-sky { height: 90px; background: linear-gradient(180deg, transparent, rgba(93,158,63,0.08)); }
+    .ground-grass { height: 32px; background: var(--grass); border-top: 4px solid #76bf4a; }
+    .ground-dirt { height: 48px; background: var(--dirt); background-image: repeating-linear-gradient(90deg, rgba(0,0,0,0.08) 0, rgba(0,0,0,0.08) 16px, transparent 16px, transparent 32px); }
+    .ground-stone { height: 24px; background: var(--stone); background-image: repeating-linear-gradient(90deg, rgba(0,0,0,0.1) 0, rgba(0,0,0,0.1) 16px, transparent 16px, transparent 32px); }
+
+    .tree { position: absolute; bottom: 104px; }
+    .tree-trunk { width: 16px; height: 32px; background: var(--wood); margin: 0 auto; }
+    .tree-leaves { width: 48px; height: 48px; background: var(--leaf); margin: 0 auto -4px; }
+
+    .opal-gem { width: 80px; height: 80px; margin-bottom: 32px; animation: float 3s ease-in-out infinite; image-rendering: pixelated; filter: drop-shadow(0 0 24px var(--opal3)); }
+    @keyframes float { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-16px) rotate(4deg); } }
+
+    .hero-content { text-align: center; z-index: 10; padding: 0 20px; }
+    .hero-title { font-family: var(--pixel); font-size: clamp(20px,5vw,40px); color: var(--opal2); text-shadow: 4px 4px 0 #000,0 0 40px var(--opal3); margin-bottom: 8px; letter-spacing: 2px; animation: glow-pulse 2s ease-in-out infinite alternate; }
+    .hero-sub { font-family: var(--pixel); font-size: clamp(8px,2vw,12px); color: var(--diamond); text-shadow: 2px 2px 0 #000; margin-bottom: 24px; letter-spacing: 1px; }
+    @keyframes glow-pulse {
+      from { text-shadow: 4px 4px 0 #000,0 0 20px var(--opal3); }
+      to { text-shadow: 4px 4px 0 #000,0 0 60px var(--opal2),0 0 80px var(--opal3); }
+    }
+    .hero-desc { font-family: var(--mono); font-size: 22px; color: #b0c8d4; max-width: 560px; margin: 0 auto 36px; line-height: 1.6; }
+    .cursor-blink { animation: blink 1s step-end infinite; }
+    @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+
+    .btn-group { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn { font-family: var(--pixel); font-size: 10px; padding: 14px 28px; border: 3px solid; cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.1s; position: relative; letter-spacing: 1px; }
+    .btn::after { content:''; position:absolute; bottom:-6px; right:-6px; width:100%; height:100%; border:3px solid rgba(0,0,0,0.4); z-index:-1; }
+    .btn-primary { background: var(--grass); border-color: #76bf4a; color: #fff; text-shadow: 1px 1px 0 #000; }
+    .btn-primary:hover { background: #76bf4a; transform: translate(-2px,-2px); box-shadow: 4px 4px 0 #2d6e1a; }
+    .btn-secondary { background: var(--opal3); border-color: var(--opal2); color: #fff; text-shadow: 1px 1px 0 #000; }
+    .btn-secondary:hover { background: var(--opal2); transform: translate(-2px,-2px); box-shadow: 4px 4px 0 #1a6e8a; }
+
+    .particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+    .particle { position: absolute; width: 8px; height: 8px; image-rendering: pixelated; animation: rise linear infinite; opacity: 0.7; }
+    @keyframes rise { 0% { transform:translateY(100vh) rotate(0deg); opacity:0; } 10% { opacity:0.7; } 90% { opacity:0.5; } 100% { transform:translateY(-100px) rotate(360deg); opacity:0; } }
+
+    /* SECTIONS */
+    section { min-height: 100vh; padding: 100px 40px 80px; position: relative; }
+    .section-label { font-family: var(--pixel); font-size: 9px; color: var(--grass); letter-spacing: 4px; margin-bottom: 12px; }
+    .section-title { font-family: var(--pixel); font-size: clamp(16px,3vw,28px); color: var(--opal2); text-shadow: 3px 3px 0 #000; margin-bottom: 16px; }
+    .section-divider { width: 64px; height: 4px; background: var(--grass); margin-bottom: 48px; }
+
+    /* DOWNLOAD */
+    #download { background: linear-gradient(180deg, #1a1a2e 0%, #0f1a2e 100%); }
+    #download .section-inner { max-width: 700px; margin: 0 auto; }
+
+    .pixel-corner { position: absolute; width: 16px; height: 16px; background: var(--opal3); }
+    .pc-tl { top: -3px; left: -3px; } .pc-tr { top: -3px; right: -3px; }
+    .pc-bl { bottom: -3px; left: -3px; } .pc-br { bottom: -3px; right: -3px; }
+
+    .download-main-box {
+      background: rgba(13,13,26,0.95); border: 4px solid var(--opal3);
+      padding: 48px 40px; text-align: center; margin-bottom: 36px; position: relative; overflow: hidden;
+    }
+    .download-main-box::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at center, rgba(63,167,214,0.08) 0%, transparent 70%); pointer-events:none; }
+    .download-main-box h3 { font-family: var(--pixel); font-size: clamp(14px,3vw,22px); color: var(--gold); text-shadow: 2px 2px 0 #000; margin-bottom: 12px; }
+    .download-main-box p { font-family: var(--mono); font-size: 20px; color: #8ab0c4; margin-bottom: 28px; }
+
+    .download-card {
+      background: rgba(26,26,46,0.9); border: 3px solid var(--stone);
+      padding: 36px; position: relative; transition: all 0.15s; overflow: hidden;
+    }
+    .download-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:var(--grass); }
+    .download-card:hover { border-color: var(--opal3); transform: translate(-3px,-3px); box-shadow: 6px 6px 0 rgba(63,167,214,0.3); }
+    .download-card:hover::before { background: var(--opal3); }
+
+    .card-icon { width: 56px; height: 56px; image-rendering: pixelated; margin-bottom: 20px; display: block; }
+    .version-badge { display:inline-block; font-family:var(--pixel); font-size:8px; padding:5px 12px; background:var(--grass); color:#fff; border:2px solid #76bf4a; margin-bottom:16px; text-shadow:1px 1px 0 #000; }
+    .card-title { font-family: var(--pixel); font-size: 13px; color: var(--opal2); margin-bottom: 10px; text-shadow: 1px 1px 0 #000; }
+    .card-desc { font-family: var(--mono); font-size: 20px; color: #8a9bb0; margin-bottom: 24px; line-height: 1.5; }
+
+    .btn-download { display:inline-flex; align-items:center; gap:10px; font-family:var(--pixel); font-size:10px; padding:14px 24px; background:var(--grass); border:3px solid #76bf4a; color:#fff; text-decoration:none; text-shadow:1px 1px 0 #000; transition:all 0.1s; }
+    .btn-download:hover { background:#76bf4a; transform:translate(-2px,-2px); box-shadow:4px 4px 0 #2d6e1a; }
+
+    .req-table { width:100%; border-collapse:collapse; margin-top:48px; }
+    .req-table th { font-family:var(--pixel); font-size:9px; color:var(--opal2); padding:12px 16px; text-align:left; border-bottom:3px solid var(--grass); background:rgba(93,158,63,0.1); }
+    .req-table td { font-family:var(--mono); font-size:18px; color:#b0c8d4; padding:12px 16px; border-bottom:2px solid rgba(255,255,255,0.05); }
+    .req-table tr:hover td { background:rgba(93,158,63,0.05); }
+
+    /* ABOUT */
+    #about { background: linear-gradient(180deg, #0f1a2e 0%, #0d0d1a 100%); }
+    #about .section-inner { max-width: 960px; margin: 0 auto; }
+
+    .about-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start; }
+    .about-text p { font-family:var(--mono); font-size:20px; color:#b0c8d4; line-height:1.7; margin-bottom:20px; }
+    .about-text p strong { color:var(--opal2); font-family:var(--pixel); font-size:10px; }
+
+    .feature-list { list-style:none; }
+    .feature-list li { font-family:var(--mono); font-size:20px; color:#b0c8d4; padding:10px 0; border-bottom:2px solid rgba(255,255,255,0.05); display:flex; align-items:center; gap:12px; }
+    .feature-list li::before { content:'▶'; color:var(--grass); font-size:12px; }
+
+    .stats-row { display:flex; gap:16px; flex-wrap:wrap; margin:32px 0; }
+    .stat-block { background:rgba(13,13,26,0.9); border:3px solid var(--opal3); padding:20px 28px; text-align:center; flex:1; min-width:120px; }
+    .stat-num { font-family:var(--pixel); font-size:20px; color:var(--gold); display:block; text-shadow:2px 2px 0 #000; }
+    .stat-label { font-family:var(--pixel); font-size:7px; color:var(--stone); margin-top:6px; display:block; }
+
+    .team-card { background:rgba(26,26,46,0.8); border:3px solid var(--stone); padding:24px; margin-top:32px; display:flex; align-items:center; gap:20px; transition:all 0.15s; }
+    .team-card:hover { border-color:var(--opal3); transform:translate(-2px,-2px); box-shadow:4px 4px 0 rgba(63,167,214,0.2); }
+    .avatar { width:64px; height:64px; image-rendering:pixelated; border:3px solid var(--grass); flex-shrink:0; }
+    .team-info h4 { font-family:var(--pixel); font-size:10px; color:var(--opal2); margin-bottom:6px; }
+    .team-info p { font-family:var(--mono); font-size:18px; color:#8a9bb0; }
+
+    footer { background:#050510; border-top:4px solid var(--grass); padding:32px 40px; text-align:center; }
+    footer p { font-family:var(--pixel); font-size:8px; color:var(--stone); line-height:2; }
+    footer span { color:var(--opal2); }
+
+    .fade-in { opacity:0; transform:translateY(24px); transition:opacity 0.6s ease, transform 0.6s ease; }
+    .fade-in.visible { opacity:1; transform:translateY(0); }
+
+    @media (max-width:700px) {
+      .about-grid { grid-template-columns:1fr; }
+      nav ul { gap:2px; }
+      nav ul li a { font-size:7px; padding:6px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-logo">⬡ OPAL <span>LAUNCHER</span></div>
+    <ul>
+      <li><a href="#home" class="active">Home</a></li>
+      <li><a href="#download">Download</a></li>
+      <li><a href="#about">About</a></li>
+    </ul>
+  </nav>
+  <div class="notif-bar">🎮 OPAL LAUNCHER IS NOW LIVE — DOWNLOAD AND START PLAYING!</div>
+
+  <!-- ══ HERO ══ -->
+  <section id="home">
+    <div class="stars" id="stars"></div>
+    <div class="particles" id="particles"></div>
+    <div class="ground">
+      <div class="ground-sky"></div>
+      <div class="ground-grass"></div>
+      <div class="ground-dirt"></div>
+      <div class="ground-stone"></div>
+    </div>
+    <div class="tree" style="left:8%"><div class="tree-leaves"></div><div class="tree-trunk"></div></div>
+    <div class="tree" style="left:14%;bottom:112px;transform:scale(0.75)"><div class="tree-leaves"></div><div class="tree-trunk"></div></div>
+    <div class="tree" style="right:10%"><div class="tree-leaves"></div><div class="tree-trunk"></div></div>
+    <div class="tree" style="right:18%;bottom:116px;transform:scale(0.8)"><div class="tree-leaves"></div><div class="tree-trunk"></div></div>
+
+    <div class="hero-content">
+      <svg class="opal-gem" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated">
+        <rect x="24" y="0"  width="32" height="8" fill="#a8d8ea"/>
+        <rect x="16" y="8"  width="48" height="8" fill="#7ec8e3"/>
+        <rect x="8"  y="16" width="64" height="8" fill="#5db8d8"/>
+        <rect x="0"  y="24" width="80" height="8" fill="#3fa7d6"/>
+        <rect x="8"  y="32" width="64" height="8" fill="#5de0e6"/>
+        <rect x="16" y="40" width="48" height="8" fill="#a8d8ea"/>
+        <rect x="24" y="48" width="32" height="8" fill="#7ec8e3"/>
+        <rect x="32" y="56" width="16" height="8" fill="#5db8d8"/>
+        <rect x="28" y="8"  width="8"  height="8" fill="rgba(255,255,255,0.4)"/>
+        <rect x="20" y="16" width="4"  height="4" fill="rgba(255,255,255,0.25)"/>
+      </svg>
+      <p class="section-label">✦ INTRODUCING ✦</p>
+      <h1 class="hero-title">OPAL LAUNCHER</h1>
+      <p class="hero-sub">THE ULTIMATE MINECRAFT EXPERIENCE</p>
+      <p class="hero-desc">A powerful, fast, and beautiful Minecraft launcher built for players who want more. One launcher. All versions. Zero hassle. <span class="cursor-blink">_</span></p>
+      <div class="btn-group">
+        <a href="#download" class="btn btn-primary">⬇ Download Now</a>
+        <a href="#about" class="btn btn-secondary">Learn More ➔</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ DOWNLOAD ══ -->
+  <section id="download">
+    <div class="section-inner">
+      <p class="section-label fade-in">⬇ DOWNLOADS</p>
+      <h2 class="section-title fade-in">Get Opal Launcher</h2>
+      <div class="section-divider fade-in"></div>
+
+      <div class="download-main-box fade-in">
+        <div class="pc-tl pixel-corner"></div><div class="pc-tr pixel-corner"></div>
+        <div class="pc-bl pixel-corner"></div><div class="pc-br pixel-corner"></div>
+        <h3>🏆 LATEST RELEASE</h3>
+        <p>Download the latest version of Opal Launcher and start playing in seconds.</p>
+        <a href="https://drive.google.com/drive/folders/1yNJ9HmQR_diVjM4mC6nkuDgb2ofPOTbA?usp=drive_link"
+           target="_blank" class="btn btn-primary" style="margin:0 auto;font-size:12px;padding:18px 36px;">
+          ⬇ &nbsp; DOWNLOAD OPAL LAUNCHER
+        </a>
+      </div>
+
+      <!-- Windows only -->
+      <div class="download-card fade-in">
+        <svg class="card-icon" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated">
+          <rect x="0"  y="0"  width="56" height="56" fill="#1a6eaf"/>
+          <rect x="8"  y="8"  width="38" height="8"  fill="#fff"/>
+          <rect x="8"  y="18" width="38" height="8"  fill="#fff"/>
+          <rect x="8"  y="28" width="38" height="8"  fill="#fff"/>
+          <rect x="8"  y="42" width="16" height="8"  fill="#fff"/>
+          <rect x="32" y="42" width="14" height="8"  fill="#fff"/>
+        </svg>
+        <div class="version-badge">WINDOWS</div>
+        <h3 class="card-title">Windows Edition</h3>
+        <p class="card-desc">Compatible with Windows 10 &amp; 11. Optimized for the best performance on PC. Fast launch, clean UI, and full Minecraft version support out of the box.</p>
+        <a href="https://drive.google.com/drive/folders/1yNJ9HmQR_diVjM4mC6nkuDgb2ofPOTbA?usp=drive_link"
+           target="_blank" class="btn-download">▶ &nbsp; Download for Windows</a>
+      </div>
+
+      <div class="fade-in">
+        <table class="req-table">
+          <thead><tr><th>Component</th><th>Minimum</th><th>Recommended</th></tr></thead>
+          <tbody>
+            <tr><td>OS</td><td>Windows 10</td><td>Windows 11</td></tr>
+            <tr><td>RAM</td><td>2 GB</td><td>4 GB or more</td></tr>
+            <tr><td>Storage</td><td>500 MB</td><td>2 GB+</td></tr>
+            <tr><td>Java</td><td>Java 8+</td><td>Java 17+</td></tr>
+            <tr><td>Internet</td><td>Required for login</td><td>Stable broadband</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ ABOUT ══ -->
+  <section id="about">
+    <div class="section-inner">
+      <p class="section-label fade-in">ℹ ABOUT</p>
+      <h2 class="section-title fade-in">What Is Opal Launcher?</h2>
+      <div class="section-divider fade-in"></div>
+
+      <div class="about-grid fade-in">
+        <div class="about-text">
+          <p><strong>Opal Launcher</strong> is a custom Minecraft launcher crafted with passion for the Minecraft community. Designed to be fast, reliable, and feature-packed — giving players full control over their game.</p>
+          <p>Whether you're a casual player or a hardcore modder, Opal Launcher has everything you need to manage your Minecraft installations in one clean interface.</p>
+          <p>Named after the beautiful <strong>opal gemstone</strong>, this launcher shines with features that make it stand out. Clean UI, fast launching, and deep Minecraft integration — all for free.</p>
+          <div class="stats-row">
+            <div class="stat-block"><span class="stat-num">100%</span><span class="stat-label">FREE</span></div>
+            <div class="stat-block"><span class="stat-num">ALL</span><span class="stat-label">MC VERSIONS</span></div>
+            <div class="stat-block"><span class="stat-num">FAST</span><span class="stat-label">LAUNCH TIME</span></div>
+          </div>
+        </div>
+        <div>
+          <h3 style="font-family:var(--pixel);font-size:11px;color:var(--gold);margin-bottom:20px;text-shadow:1px 1px 0 #000;">✦ Features</h3>
+          <ul class="feature-list">
+            <li>Launch any version of Minecraft</li>
+            <li>Fast &amp; lightweight design</li>
+            <li>Easy account management</li>
+            <li>Mod &amp; modpack support</li>
+            <li>Custom Java settings</li>
+            <li>Beautiful Minecraft-themed UI</li>
+            <li>Regular updates &amp; bug fixes</li>
+            <li>Completely free to use</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="fade-in" style="margin-top:56px">
+        <h3 style="font-family:var(--pixel);font-size:12px;color:var(--opal2);margin-bottom:20px;text-shadow:2px 2px 0 #000;">👾 The Creator</h3>
+        <div class="team-card">
+          <svg class="avatar" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated">
+            <rect x="16" y="4"  width="32" height="32" fill="#c8a87a"/>
+            <rect x="16" y="4"  width="32" height="10" fill="#3d2b1a"/>
+            <rect x="16" y="14" width="8"  height="6"  fill="#3d2b1a"/>
+            <rect x="22" y="20" width="6"  height="6"  fill="#fff"/>
+            <rect x="36" y="20" width="6"  height="6"  fill="#fff"/>
+            <rect x="24" y="22" width="4"  height="4"  fill="#1a6eaf"/>
+            <rect x="38" y="22" width="4"  height="4"  fill="#1a6eaf"/>
+            <rect x="24" y="30" width="16" height="4"  fill="#7a3d20"/>
+            <rect x="12" y="36" width="40" height="24" fill="#3fa7d6"/>
+            <rect x="0"  y="36" width="12" height="20" fill="#c8a87a"/>
+            <rect x="52" y="36" width="12" height="20" fill="#c8a87a"/>
+            <rect x="12" y="56" width="16" height="8"  fill="#1a3c6e"/>
+            <rect x="36" y="56" width="16" height="8"  fill="#1a3c6e"/>
+          </svg>
+          <div class="team-info">
+            <h4>Opal Launcher Dev Team</h4>
+            <p>Built with ❤️ for the Minecraft community. A passion project made to give players the best possible launching experience — completely free.</p>
+          </div>
+        </div>
+
+        <div style="margin-top:48px;text-align:center;padding:40px;border:3px solid var(--grass);background:rgba(93,158,63,0.05);">
+          <h3 style="font-family:var(--pixel);font-size:14px;color:var(--gold);text-shadow:2px 2px 0 #000;margin-bottom:12px;">Ready to Play?</h3>
+          <p style="font-family:var(--mono);font-size:20px;color:#8ab0c4;margin-bottom:24px;">Download Opal Launcher now and start your adventure!</p>
+          <a href="https://drive.google.com/drive/folders/1yNJ9HmQR_diVjM4mC6nkuDgb2ofPOTbA?usp=drive_link"
+             target="_blank" class="btn btn-primary" style="font-size:11px;padding:16px 32px;">
+            ⬇ Download Opal Launcher
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>⬡ <span>OPAL LAUNCHER</span> ⬡</p>
+    <p>Made with ❤️ for the Minecraft Community</p>
+    <p style="margin-top:8px;font-size:7px;color:#444;">Not affiliated with Mojang Studios or Microsoft. Minecraft is a registered trademark of Mojang.</p>
+  </footer>
+
+  <script>
+    // Stars
+    const starsEl = document.getElementById('stars');
+    for(let i=0;i<80;i++){
+      const s=document.createElement('div'); s.className='star';
+      s.style.left=Math.random()*100+'%'; s.style.top=Math.random()*70+'%';
+      s.style.animationDelay=Math.random()*3+'s';
+      s.style.animationDuration=(1.5+Math.random()*2)+'s';
+      starsEl.appendChild(s);
+    }
+    // Particles
+    const colors=['#5d9e3f','#a8d8ea','#ffd700','#5de0e6','#3fa7d6','#866043'];
+    const pe=document.getElementById('particles');
+    for(let i=0;i<20;i++){
+      const p=document.createElement('div'); p.className='particle';
+      p.style.left=Math.random()*100+'%';
+      p.style.background=colors[Math.floor(Math.random()*colors.length)];
+      p.style.animationDuration=(8+Math.random()*12)+'s';
+      p.style.animationDelay=(Math.random()*10)+'s';
+      p.style.width=p.style.height=(Math.random()>0.5?8:4)+'px';
+      pe.appendChild(p);
+    }
+    // Fade in
+    const obs=new IntersectionObserver((entries)=>{
+      entries.forEach((e,i)=>{ if(e.isIntersecting) setTimeout(()=>e.target.classList.add('visible'),i*100); });
+    },{threshold:0.1});
+    document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+    // Active nav
+    const sections=document.querySelectorAll('section');
+    const navLinks=document.querySelectorAll('nav ul li a');
+    window.addEventListener('scroll',()=>{
+      let cur='';
+      sections.forEach(s=>{ if(window.scrollY>=s.offsetTop-100) cur=s.getAttribute('id'); });
+      navLinks.forEach(a=>{ a.classList.remove('active'); if(a.getAttribute('href')==='#'+cur) a.classList.add('active'); });
+    });
+  </script>
+</body>
+</html>
